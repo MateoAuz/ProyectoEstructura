@@ -1,7 +1,8 @@
 import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
 import { Alert, Button, Card, CardContent, TextField, Typography } from '@mui/material';
 import axios from 'axios';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { MenuItem, FormControl, InputLabel, Select } from '@mui/material';
 
 function Recomendacion() {
   const [tiempo, setTiempo] = useState('');
@@ -21,6 +22,22 @@ function Recomendacion() {
     }
   };
 
+
+  const [lecciones, setLecciones] = useState([]);
+
+  useEffect(() => {
+    obtenerLecciones();
+  }, []);
+
+  const obtenerLecciones = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/lecciones');
+      setLecciones(res.data);
+    } catch (error) {
+      console.error("Error al obtener lecciones:", error);
+    }
+  };
+
   return (
     <Card sx={{ mt: 4 }}>
       <CardContent>
@@ -29,13 +46,21 @@ function Recomendacion() {
           Recomendación Personalizada
         </Typography>
 
-        <TextField
-          type="number"
-          label="ID de la lección"
-          value={leccionId}
-          onChange={(e) => setLeccionId(e.target.value)}
-          sx={{ mr: 2, mt: 2 }}
-        />
+        <FormControl fullWidth sx={{ mt: 2 }}>
+          <InputLabel id="select-leccion-label">Lección</InputLabel>
+          <Select
+            labelId="select-leccion-label"
+            value={leccionId}
+            label="Lección"
+            onChange={(e) => setLeccionId(e.target.value)}
+          >
+            {lecciones.map((lec) => (
+              <MenuItem key={lec.id} value={lec.id}>
+                {lec.nombre}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
 
         <TextField
           type="number"

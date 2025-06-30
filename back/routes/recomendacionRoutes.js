@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Leccion = require('../models/Leccion');
 const Evaluacion = require('../models/Evaluacion');
-const { Op } = require('sequelize');
+const { tree, recorrerArbol } = require('../decisionTree');
 
 router.post('/', async (req, res) => {
   const { tiempo, leccionId } = req.body;
@@ -24,38 +24,15 @@ router.post('/', async (req, res) => {
   }
 
   const puntaje = evaluacion.puntaje_obtenido;
-  let recomendacion = "";
 
-  // 🔧 Nueva lógica de árbol de decisión realista
-  if (puntaje >= 9) {
-    recomendacion = `Excelente desempeño en ${leccionActual.nombre}. Puedes avanzar a una lección avanzada si está disponible.`;
+  // ✅ Preparar datos de entrada para el árbol
+  const data = {
+    puntaje,
+    tiempo
+  };
 
-    let siguienteNivel = "";
-    if (leccionActual.nivel === 'básico') siguienteNivel = 'intermedio';
-    else if (leccionActual.nivel === 'intermedio') siguienteNivel = 'avanzado';
-
-    if (siguienteNivel !== "") {
-      const leccionSuperior = await Leccion.findOne({
-        where: {
-          ModuloId: leccionActual.ModuloId,
-          nivel: siguienteNivel
-        }
-      });
-
-      if (leccionSuperior) {
-        recomendacion += ` Te recomendamos: ${leccionSuperior.nombre} (Nivel ${siguienteNivel}).`;
-      } else {
-        recomendacion += " No hay lecciones de nivel superior en este módulo.";
-      }
-    }
-
-  } else if (puntaje >= 7) {
-    recomendacion = `Buen puntaje en ${leccionActual.nombre}. Te sugerimos reforzar con ejercicios prácticos antes de avanzar.`;
-  } else if (puntaje >= 5) {
-    recomendacion = `Tu puntaje en ${leccionActual.nombre} indica que debes repasar la teoría y repetir la evaluación para afianzar conocimientos.`;
-  } else {
-    recomendacion = `Debes reforzar la lección actual: ${leccionActual.nombre} y considera solicitar tutoría o asistencia personalizada.`;
-  }
+  // 🌳 Obtener recomendación usando el árbol de decisión
+  const recomendacion = recorrerArbol(tree, data);
 
   res.json({ recomendacion });
 });

@@ -8,14 +8,18 @@ class DecisionNode {
 
 const tree = new DecisionNode(
   (data) => data.puntaje >= 9,
-  "Avanzar a lección avanzada",
+  "✅ Excelente, avanza a la siguiente lección o módulo si está disponible.",
   new DecisionNode(
     (data) => data.puntaje >= 7,
-    "Reforzar con ejercicios prácticos",
+    "👍 Buen trabajo. Realiza ejercicios prácticos adicionales antes de avanzar.",
     new DecisionNode(
       (data) => data.puntaje >= 5,
-      "Revisar teoría y repetir evaluación",
-      "Solicitar tutoría o asistencia"
+      "⚠️ Debes repasar la teoría y repetir la evaluación.",
+      new DecisionNode(
+        (data) => data.tiempo < 10,
+        "⏰ Dedica más tiempo a esta lección antes de evaluarte.",
+        "❌ Solicita tutoría o repaso intensivo para superar esta lección."
+      )
     )
   )
 );
