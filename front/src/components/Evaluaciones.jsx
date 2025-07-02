@@ -1,11 +1,11 @@
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
-  Box,
   Button, Card, CardContent,
   IconButton, List, ListItem, ListItemText,
   TextField,
-  Typography
+  Typography,
+  Box
 } from '@mui/material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
@@ -13,27 +13,27 @@ import { useEffect, useState } from 'react';
 function Evaluaciones({ leccionId }) {
   const [evaluaciones, setEvaluaciones] = useState([]);
   const [nuevaEval, setNuevaEval] = useState('');
-  const [puntaje, setPuntaje] = useState('');
-  const [puntajeObtenido, setPuntajeObtenido] = useState({}); // objeto para cada input de puntaje obtenido
-
-  useEffect(() => {
-    if (leccionId) obtenerEvaluaciones();
-  }, [leccionId]);
+  const [puntajeMinimo, setPuntajeMinimo] = useState('');
 
   const obtenerEvaluaciones = async () => {
     const res = await axios.get(`http://localhost:5000/api/evaluaciones/leccion/${leccionId}`);
     setEvaluaciones(res.data);
   };
 
+  useEffect(() => {
+    if (leccionId) obtenerEvaluaciones();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [leccionId]);
+
   const crearEvaluacion = async () => {
-    if (nuevaEval.trim() === '' || puntaje.trim() === '') return;
+    if (nuevaEval.trim() === '' || puntajeMinimo.trim() === '') return;
     await axios.post('http://localhost:5000/api/evaluaciones', {
       nombre: nuevaEval,
-      puntaje_maximo: parseInt(puntaje),
+      puntaje_maximo: parseInt(puntajeMinimo),
       LeccionId: leccionId
     });
     setNuevaEval('');
-    setPuntaje('');
+    setPuntajeMinimo('');
     obtenerEvaluaciones();
   };
 
@@ -42,74 +42,67 @@ function Evaluaciones({ leccionId }) {
     obtenerEvaluaciones();
   };
 
-  const registrarPuntaje = async (id) => {
-    if (!puntajeObtenido[id]) return;
-    await axios.patch(`http://localhost:5000/api/evaluaciones/${id}/puntaje`, {
-      puntaje_obtenido: parseInt(puntajeObtenido[id])
-    });
-    obtenerEvaluaciones();
-    setPuntajeObtenido({ ...puntajeObtenido, [id]: '' }); // limpiar input
-  };
-
   return (
-    <Card sx={{ mb: 2, ml: 4, width: '85%' }}>
+    <Card sx={{ mb: 2, ml: 4, width: '85%', minWidth: 320 }}>
       <CardContent>
-        <Typography variant="subtitle2">
+        <Typography variant="subtitle2" sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
           <AssignmentIcon sx={{ mr: 1 }} />
           Evaluaciones
         </Typography>
 
-        <TextField
-          label="Nombre de la evaluación"
-          value={nuevaEval}
-          onChange={(e) => setNuevaEval(e.target.value)}
-          sx={{ mr: 2 }}
-        />
-        <TextField
-          label="Puntaje máximo"
-          type="number"
-          value={puntaje}
-          onChange={(e) => setPuntaje(e.target.value)}
-          sx={{ mr: 2 }}
-        />
-        <Button
-          variant="contained"
-          sx={{ backgroundColor: '#0D47A1' }}
-          onClick={crearEvaluacion}
+        {/* Inputs verticales, mismo ancho y buen espacio */}
+        <Box
+          component="form"
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'stretch',
+            gap: 2,
+            mb: 2,
+            maxWidth: 260
+          }}
+          onSubmit={(e) => { e.preventDefault(); crearEvaluacion(); }}
         >
-          Crear Evaluación
-        </Button>
+          <TextField
+            label="Nombre de la evaluación"
+            value={nuevaEval}
+            onChange={(e) => setNuevaEval(e.target.value)}
+            size="small"
+            sx={{ width: '100%' }}
+          />
+          <TextField
+            label="Puntaje mínimo para aprobar"
+            type="number"
+            value={puntajeMinimo}
+            inputProps={{ min: 1, max: 10 }}
+            onChange={(e) => {
+              const value = e.target.value;
+              if (value === '' || (parseInt(value) >= 1 && parseInt(value) <= 10)) {
+                setPuntajeMinimo(value);
+              }
+            }}
+            size="small"
+            sx={{ width: '100%' }}
+          />
+          <Button
+            variant="contained"
+            sx={{ backgroundColor: '#0D47A1', minWidth: 140, boxShadow: 1, mt: 1 }}
+            size="small"
+            type="submit"
+          >
+            Crear Evaluación
+          </Button>
+        </Box>
 
         <List>
           {evaluaciones.map((eva) => (
-            <ListItem key={eva.id} sx={{ display: 'block' }}>
+            <ListItem key={eva.id} sx={{ display: 'flex', alignItems: 'center', pl: 0 }}>
               <ListItemText
-                primary={`${eva.nombre} - Máx: ${eva.puntaje_maximo}`}
-                secondary={`Puntaje obtenido: ${eva.puntaje_obtenido ?? 'No registrado'}`}
+                primary={`${eva.nombre} - Mínimo para aprobar: ${eva.puntaje_maximo}`}
               />
-
-              <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <TextField
-                  label="Registrar puntaje obtenido"
-                  type="number"
-                  size="small"
-                  value={puntajeObtenido[eva.id] || ''}
-                  onChange={(e) =>
-                    setPuntajeObtenido({ ...puntajeObtenido, [eva.id]: e.target.value })
-                  }
-                  sx={{ mr: 2 }}
-                />
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => registrarPuntaje(eva.id)}
-                >
-                  Registrar
-                </Button>
-                <IconButton color="error" onClick={() => eliminarEvaluacion(eva.id)}>
-                  <DeleteIcon />
-                </IconButton>
-              </Box>
+              <IconButton color="error" onClick={() => eliminarEvaluacion(eva.id)}>
+                <DeleteIcon />
+              </IconButton>
             </ListItem>
           ))}
         </List>

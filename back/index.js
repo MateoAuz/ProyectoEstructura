@@ -34,3 +34,6 @@ const evaluacionRoutes = require('./routes/evaluacionRoutes');
 app.use('/api/evaluaciones', evaluacionRoutes);
 const recomendacionRoutes = require('./routes/recomendacionRoutes');
 app.use('/api/recomendacion', recomendacionRoutes);
+const evaluacionSimulacionRoutes = require('./routes/evaluacionSimulacionRoutes');
+app.use('/api/evaluacion_simulacion', evaluacionSimulacionRoutes);
+app.use('/api', require('./routes/evaluacionSimulacionRoutes'));

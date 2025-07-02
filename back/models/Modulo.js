@@ -3,7 +3,8 @@ const sequelize = require('../db');
 const Curso = require('./Curso');
 
 const Modulo = sequelize.define('Modulo', {
-  nombre: DataTypes.STRING,
+  nombreModulo: DataTypes.STRING,
+  contenido: DataTypes.TEXT, // Nuevo campo para contenido adicional
 });
 
 Curso.hasMany(Modulo, { onDelete: 'CASCADE' });

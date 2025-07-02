@@ -5,6 +5,7 @@ import TreeViewCursos from './components/TreeViewCursos';
 import Navbar from './components/Navbar';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import SimuladorCurso from './components/SimuladorCurso';
 
 import {
   Box,
@@ -42,14 +43,15 @@ const theme = createTheme({
   },
 });
 
-
 function App() {
+  const [cursoSeleccionado, setCursoSeleccionado] = useState(null);
+  const [simular, setSimular] = useState(false);
   const [cursos, setCursos] = useState([]);
   const [nuevoCurso, setNuevoCurso] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogTipo, setDialogTipo] = useState('crear');
-  const [cursoSeleccionado, setCursoSeleccionado] = useState(null);
+  const [cursoParaEditar, setCursoParaEditar] = useState(null);
   const [nuevoNombreCurso, setNuevoNombreCurso] = useState('');
 
   // ✅ Snackbar
@@ -120,13 +122,24 @@ function App() {
 
   const abrirDialogEditar = (curso) => {
     setDialogTipo('editar');
-    setCursoSeleccionado(curso);
+    setCursoParaEditar(curso);
     setNuevoNombreCurso(curso.nombre);
     setDialogOpen(true);
   };
 
   const cerrarDialog = () => {
     setDialogOpen(false);
+  };
+
+  // --- NUEVO: Manejo para simulador de cursado de curso ---
+  const handleIniciarSimulacion = (curso) => {
+    setCursoSeleccionado(curso);
+    setSimular(true);
+  };
+
+  const handleSalirSimulacion = () => {
+    setSimular(false);
+    setCursoSeleccionado(null);
   };
 
   return (
@@ -162,29 +175,46 @@ function App() {
           sx={{ mb: 2 }}
         />
 
-        <List>
-          {cursos
-            .filter(curso => curso.nombre.toLowerCase().includes(busqueda.toLowerCase()))
-            .map((curso) => (
-              <Card sx={{ mb: 2, width: '100%' }} key={curso.id}>
-                <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h5">{curso.nombre}</Typography>
-                    <Box>
-                      <IconButton onClick={() => abrirDialogEditar(curso)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => eliminarCurso(curso.id)}>
-                        <DeleteIcon />
-                      </IconButton>
+        {!simular && !cursoSeleccionado && (
+          <List>
+            {cursos
+              .filter(curso => curso.nombre.toLowerCase().includes(busqueda.toLowerCase()))
+              .map((curso) => (
+                <Card sx={{ mb: 2, width: '100%' }} key={curso.id}>
+                  <CardContent>
+                    <Box display="flex" justifyContent="space-between" alignItems="center">
+                      <Typography variant="h5">{curso.nombre}</Typography>
+                      <Box>
+                        <IconButton onClick={() => abrirDialogEditar(curso)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => eliminarCurso(curso.id)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </Box>
                     </Box>
-                  </Box>
-                  <Modulos cursoId={curso.id} />
-                </CardContent>
-              </Card>
-            ))}
-        </List>
+                    <Modulos cursoId={curso.id} />
+                    {/* --- Botón para simular cursado --- */}
+                    <Button
+                      sx={{ mt: 2 }}
+                      variant="outlined"
+                      color="primary"
+                      onClick={() => handleIniciarSimulacion(curso)}
+                    >
+                      Simular cursado de este curso
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+          </List>
+        )}
 
+        {/* Mostrar simulador al seleccionar un curso */}
+        {simular && cursoSeleccionado && (
+          <SimuladorCurso curso={cursoSeleccionado} onSalir={handleSalirSimulacion} />
+        )}
+
+        {/* --- Si quieres mantener la Recomendacion global, puedes dejarla aquí --- */}
         <Recomendacion />
 
         {/* ✅ Dialog */}
@@ -214,7 +244,7 @@ function App() {
                 if (dialogTipo === 'crear') {
                   crearCurso();
                 } else {
-                  actualizarCurso(cursoSeleccionado.id);
+                  actualizarCurso(cursoParaEditar.id);
                 }
                 cerrarDialog();
               }}

@@ -4,37 +4,34 @@ const Leccion = require('../models/Leccion');
 const Evaluacion = require('../models/Evaluacion');
 const { tree, recorrerArbol } = require('../decisionTree');
 
+// Ahora acepta puntaje directamente desde el body,
+// y ya no depende de buscar la última evaluación registrada.
+// El tiempo se pone por defecto a 0, o puedes agregarlo si lo requieres.
 router.post('/', async (req, res) => {
-  const { tiempo, leccionId } = req.body;
+  const { puntaje, leccionId } = req.body;
 
-  // 🔎 Buscar la lección actual
   const leccionActual = await Leccion.findByPk(leccionId);
   if (!leccionActual) {
-    return res.status(404).json({ mensaje: "Lección actual no encontrada" });
+    return res.status(404).json({ mensaje: "Lección no encontrada" });
   }
 
-  // 🔥 Buscar la última evaluación registrada de esta lección
-  const evaluacion = await Evaluacion.findOne({
-    where: { LeccionId: leccionId },
-    order: [['createdAt', 'DESC']]
-  });
+  // Puedes eliminar la búsqueda de Evaluacion si ya no es necesaria.
+  // Si quieres mantenerla para validación adicional, la puedes dejar.
+  // Aquí la eliminamos para que la simulación funcione con el puntaje ingresado.
 
-  if (!evaluacion || evaluacion.puntaje_obtenido === null) {
-    return res.status(404).json({ mensaje: "No hay puntaje registrado en la evaluación de esta lección" });
-  }
-
-  const puntaje = evaluacion.puntaje_obtenido;
-
-  // ✅ Preparar datos de entrada para el árbol
+  // Preparar datos de entrada para el árbol de decisión.
   const data = {
-    puntaje,
-    tiempo
+    puntaje: parseInt(puntaje),
+    tiempo: 0 // o puedes aceptar un campo tiempo si lo necesitas.
   };
 
-  // 🌳 Obtener recomendación usando el árbol de decisión
+  // Obtener recomendación usando el árbol de decisión
   const recomendacion = recorrerArbol(tree, data);
 
-  res.json({ recomendacion });
+  // Si el árbol retorna objeto con mensaje, extraer mensaje.
+  const mensaje = typeof recomendacion === "string" ? recomendacion : recomendacion.mensaje;
+
+  res.json({ mensaje });
 });
 
 module.exports = router;
