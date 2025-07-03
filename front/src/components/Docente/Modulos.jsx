@@ -41,6 +41,16 @@ function Modulos({ cursoId }) {
   return (
     <Card sx={{ mb: 2, ml: 4, width: '95%' }}>
       <CardContent>
+
+        <Button
+          variant="outlined"
+          color="secondary"
+          sx={{ mb: 2 }}
+          onClick={() => window.history.back()}
+        >
+          ← Regresar
+        </Button>
+
         <Typography variant="h6">
           <MenuBookIcon sx={{ mr: 1 }} />
           Módulos

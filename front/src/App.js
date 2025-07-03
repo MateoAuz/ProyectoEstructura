@@ -1,47 +1,37 @@
+import React, { useEffect, useState } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import {
+  Box, Button, Card, CardContent, Container, IconButton,
+  List, TextField, Typography, Snackbar, Alert, Dialog,
+  DialogTitle, DialogContent, DialogActions
+} from '@mui/material';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import SchoolIcon from '@mui/icons-material/School';
-import TreeViewCursos from './components/TreeViewCursos';
-import Navbar from './components/Navbar';
-import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { Snackbar, Alert, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
-
-import {
-  Box,
-  Button, Card, CardContent,
-  Container,
-  IconButton, List,
-  TextField,
-  Typography
-} from '@mui/material';
 import axios from 'axios';
-import { useEffect, useState } from 'react';
-import Modulos from './components/Modulos';
+
+import Navbar from './components/Navbar';
+import TreeViewCursos from './components/TreeViewCursos';
+import Modulos from './components/Docente/Modulos';
 import Recomendacion from './components/Recomendacion';
+import Home from './components/Home';
+import Estudiante from './components/Estudiante/Estudiante';
+import RealizarEvaluacion from './components/Estudiante/RealizarEvaluacion';
+
 
 const theme = createTheme({
   palette: {
-    primary: {
-      main: '#0D47A1', // azul oscuro
-    },
-    secondary: {
-      main: '#1976D2', // celeste
-    },
-    error: {
-      main: '#D32F2F', // rojo para errores
-    },
-    background: {
-      default: '#f5f5f5', // fondo general
-    },
+    primary: { main: '#0D47A1' },
+    secondary: { main: '#1976D2' },
+    error: { main: '#D32F2F' },
+    background: { default: '#f5f5f5' },
   },
   typography: {
     fontFamily: 'Roboto, sans-serif',
-    button: {
-      textTransform: 'none', // 🔷 Botones con texto normal
-    },
+    button: { textTransform: 'none' },
   },
 });
-
 
 function App() {
   const [cursos, setCursos] = useState([]);
@@ -51,8 +41,6 @@ function App() {
   const [dialogTipo, setDialogTipo] = useState('crear');
   const [cursoSeleccionado, setCursoSeleccionado] = useState(null);
   const [nuevoNombreCurso, setNuevoNombreCurso] = useState('');
-
-  // ✅ Snackbar
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState('success');
@@ -82,8 +70,8 @@ function App() {
       await axios.post('http://localhost:5000/api/cursos', { nombre: nuevoCurso });
       setNuevoCurso('');
       obtenerCursos();
-      mostrarSnackbar('Curso creado correctamente', 'success');
-    } catch (error) {
+      mostrarSnackbar('Curso creado correctamente');
+    } catch {
       mostrarSnackbar('Error al crear curso', 'error');
     }
   };
@@ -93,7 +81,7 @@ function App() {
       await axios.delete(`http://localhost:5000/api/cursos/${id}`);
       obtenerCursos();
       mostrarSnackbar('Curso eliminado correctamente', 'info');
-    } catch (error) {
+    } catch {
       mostrarSnackbar('Error al eliminar curso', 'error');
     }
   };
@@ -105,13 +93,12 @@ function App() {
       setDialogOpen(false);
       setNuevoNombreCurso('');
       obtenerCursos();
-      mostrarSnackbar('Curso actualizado correctamente', 'success');
-    } catch (error) {
+      mostrarSnackbar('Curso actualizado correctamente');
+    } catch {
       mostrarSnackbar('Error al actualizar curso', 'error');
     }
   };
 
-  // ✅ Dialog
   const abrirDialogCrear = () => {
     setDialogTipo('crear');
     setNuevoCurso('');
@@ -131,111 +118,110 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Navbar />  {/* 🔷 Navbar agregado */}
-      <Container maxWidth="md" sx={{ mt: 4, bgcolor: 'background.default', p: 2, borderRadius: 2 }}>
-        <Typography variant="h3" gutterBottom>
-          <SchoolIcon sx={{ fontSize: 40, mr: 1 }} />
-          Gestión de Cursos
-        </Typography>
+      <Router>
+        <Navbar />
 
-        {/* 🔷 TreeView */}
-        <TreeViewCursos />
+        <Routes>
+          <Route path="/" element={<Home />} />
 
-        <Card sx={{ mb: 4, width: '100%' }}>
-          <CardContent>
-            <Typography variant="h6">Crear Nuevo Curso</Typography>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={abrirDialogCrear}
-            >
-              Crear Curso
-            </Button>
-          </CardContent>
-        </Card>
+          <Route path="/docente" element={
+            <Container maxWidth="md" sx={{ mt: 4, bgcolor: 'background.default', p: 2, borderRadius: 2 }}>
+              <Typography variant="h3" gutterBottom>
+                <SchoolIcon sx={{ fontSize: 40, mr: 1 }} />
+                Gestión de Cursos
+              </Typography>
 
-        <TextField
-          label="Buscar curso"
-          value={busqueda}
-          onChange={(e) => setBusqueda(e.target.value)}
-          fullWidth
-          sx={{ mb: 2 }}
-        />
+              <TreeViewCursos />
 
-        <List>
-          {cursos
-            .filter(curso => curso.nombre.toLowerCase().includes(busqueda.toLowerCase()))
-            .map((curso) => (
-              <Card sx={{ mb: 2, width: '100%' }} key={curso.id}>
+              <Card sx={{ mb: 4 }}>
                 <CardContent>
-                  <Box display="flex" justifyContent="space-between" alignItems="center">
-                    <Typography variant="h5">{curso.nombre}</Typography>
-                    <Box>
-                      <IconButton onClick={() => abrirDialogEditar(curso)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => eliminarCurso(curso.id)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </Box>
-                  </Box>
-                  <Modulos cursoId={curso.id} />
+                  <Typography variant="h6">Crear Nuevo Curso</Typography>
+                  <Button variant="contained" color="primary" onClick={abrirDialogCrear}>
+                    Crear Curso
+                  </Button>
                 </CardContent>
               </Card>
-            ))}
-        </List>
 
-        <Recomendacion />
+              <TextField
+                label="Buscar curso"
+                value={busqueda}
+                onChange={(e) => setBusqueda(e.target.value)}
+                fullWidth
+                sx={{ mb: 2 }}
+              />
 
-        {/* ✅ Dialog */}
-        <Dialog open={dialogOpen} onClose={cerrarDialog}>
-          <DialogTitle>
-            {dialogTipo === 'crear' ? 'Crear Nuevo Curso' : 'Editar Curso'}
-          </DialogTitle>
-          <DialogContent>
-            <TextField
-              autoFocus
-              margin="dense"
-              label="Nombre del curso"
-              fullWidth
-              value={dialogTipo === 'crear' ? nuevoCurso : nuevoNombreCurso}
-              onChange={(e) => {
-                dialogTipo === 'crear'
-                  ? setNuevoCurso(e.target.value)
-                  : setNuevoNombreCurso(e.target.value);
-              }}
-            />
-          </DialogContent>
-          <DialogActions>
-            <Button onClick={cerrarDialog}>Cancelar</Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (dialogTipo === 'crear') {
-                  crearCurso();
-                } else {
-                  actualizarCurso(cursoSeleccionado.id);
-                }
-                cerrarDialog();
-              }}
-            >
-              {dialogTipo === 'crear' ? 'Crear' : 'Guardar'}
-            </Button>
-          </DialogActions>
-        </Dialog>
+              <List>
+                {cursos
+                  .filter(c => c.nombre.toLowerCase().includes(busqueda.toLowerCase()))
+                  .map(curso => (
+                    <Card sx={{ mb: 2 }} key={curso.id}>
+                      <CardContent>
+                        <Box display="flex" justifyContent="space-between" alignItems="center">
+                          <Typography variant="h5">{curso.nombre}</Typography>
+                          <Box>
+                            <IconButton onClick={() => abrirDialogEditar(curso)}>
+                              <EditIcon />
+                            </IconButton>
+                            <IconButton color="error" onClick={() => eliminarCurso(curso.id)}>
+                              <DeleteIcon />
+                            </IconButton>
+                          </Box>
+                        </Box>
+                        <Modulos cursoId={curso.id} />
+                      </CardContent>
+                    </Card>
+                  ))}
+              </List>
 
-        {/* ✅ Snackbar */}
-        <Snackbar
-          open={snackbarOpen}
-          autoHideDuration={4000}
-          onClose={handleSnackbarClose}
-          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-        >
-          <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
-      </Container>
+              <Dialog open={dialogOpen} onClose={cerrarDialog}>
+                <DialogTitle>{dialogTipo === 'crear' ? 'Crear Nuevo Curso' : 'Editar Curso'}</DialogTitle>
+                <DialogContent>
+                  <TextField
+                    autoFocus
+                    margin="dense"
+                    label="Nombre del curso"
+                    fullWidth
+                    value={dialogTipo === 'crear' ? nuevoCurso : nuevoNombreCurso}
+                    onChange={(e) => {
+                      dialogTipo === 'crear'
+                        ? setNuevoCurso(e.target.value)
+                        : setNuevoNombreCurso(e.target.value);
+                    }}
+                  />
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={cerrarDialog}>Cancelar</Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      dialogTipo === 'crear'
+                        ? crearCurso()
+                        : actualizarCurso(cursoSeleccionado.id);
+                      cerrarDialog();
+                    }}
+                  >
+                    {dialogTipo === 'crear' ? 'Crear' : 'Guardar'}
+                  </Button>
+                </DialogActions>
+              </Dialog>
+
+              <Snackbar
+                open={snackbarOpen}
+                autoHideDuration={4000}
+                onClose={handleSnackbarClose}
+                anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+              >
+                <Alert onClose={handleSnackbarClose} severity={snackbarSeverity} sx={{ width: '100%' }}>
+                  {snackbarMessage}
+                </Alert>
+              </Snackbar>
+            </Container>
+          } />
+
+          <Route path="/estudiante" element={<Estudiante />} />
+          <Route path="/estudiante/evaluacion/:evaluacionId" element={<RealizarEvaluacion />} />
+        </Routes>
+      </Router>
     </ThemeProvider>
   );
 }

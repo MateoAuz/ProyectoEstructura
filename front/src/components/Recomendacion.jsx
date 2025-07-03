@@ -1,28 +1,11 @@
 import TipsAndUpdatesIcon from '@mui/icons-material/TipsAndUpdates';
-import { Alert, Button, Card, CardContent, TextField, Typography } from '@mui/material';
+import { Alert, Button, Card, CardContent, Typography, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
 import axios from 'axios';
 import { useState, useEffect } from 'react';
-import { MenuItem, FormControl, InputLabel, Select } from '@mui/material';
 
 function Recomendacion() {
-  const [tiempo, setTiempo] = useState('');
   const [leccionId, setLeccionId] = useState('');
   const [resultado, setResultado] = useState('');
-
-  const obtenerRecomendacion = async () => {
-    try {
-      const res = await axios.post('http://localhost:5000/api/recomendacion', {
-        tiempo: parseInt(tiempo),
-        leccionId: parseInt(leccionId)
-      });
-      setResultado(res.data.recomendacion);
-    } catch (error) {
-      console.error(error);
-      setResultado("Error al obtener recomendación");
-    }
-  };
-
-
   const [lecciones, setLecciones] = useState([]);
 
   useEffect(() => {
@@ -35,6 +18,18 @@ function Recomendacion() {
       setLecciones(res.data);
     } catch (error) {
       console.error("Error al obtener lecciones:", error);
+    }
+  };
+
+  const obtenerRecomendacion = async () => {
+    try {
+      const res = await axios.post('http://localhost:5000/api/recomendacion', {
+        leccionId: parseInt(leccionId)
+      });
+      setResultado(res.data.recomendacion);
+    } catch (error) {
+      console.error(error);
+      setResultado("Error al obtener recomendación");
     }
   };
 
@@ -62,18 +57,11 @@ function Recomendacion() {
           </Select>
         </FormControl>
 
-        <TextField
-          type="number"
-          label="Tiempo (min)"
-          value={tiempo}
-          onChange={(e) => setTiempo(e.target.value)}
-          sx={{ mr: 2, mt: 2 }}
-        />
-
         <Button
           variant="contained"
           sx={{ mt: 2, backgroundColor: '#0D47A1' }}
           onClick={obtenerRecomendacion}
+          disabled={!leccionId}
         >
           Obtener recomendación
         </Button>

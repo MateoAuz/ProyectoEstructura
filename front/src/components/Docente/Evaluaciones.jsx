@@ -5,16 +5,19 @@ import {
   Button, Card, CardContent,
   IconButton, List, ListItem, ListItemText,
   TextField,
-  Typography
+  Typography,
+  Alert
 } from '@mui/material';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
+import Preguntas from './Preguntas';
 
 function Evaluaciones({ leccionId }) {
   const [evaluaciones, setEvaluaciones] = useState([]);
   const [nuevaEval, setNuevaEval] = useState('');
   const [puntaje, setPuntaje] = useState('');
-  const [puntajeObtenido, setPuntajeObtenido] = useState({}); // objeto para cada input de puntaje obtenido
+  const [puntajeObtenido, setPuntajeObtenido] = useState({});
+  const [recomendaciones, setRecomendaciones] = useState({});
 
   useEffect(() => {
     if (leccionId) obtenerEvaluaciones();
@@ -48,7 +51,7 @@ function Evaluaciones({ leccionId }) {
       puntaje_obtenido: parseInt(puntajeObtenido[id])
     });
     obtenerEvaluaciones();
-    setPuntajeObtenido({ ...puntajeObtenido, [id]: '' }); // limpiar input
+    setPuntajeObtenido({ ...puntajeObtenido, [id]: '' });
   };
 
   return (
@@ -88,6 +91,8 @@ function Evaluaciones({ leccionId }) {
                 secondary={`Puntaje obtenido: ${eva.puntaje_obtenido ?? 'No registrado'}`}
               />
 
+              <Preguntas evaluacionId={eva.id} />
+
               <Box sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
                 <TextField
                   label="Registrar puntaje obtenido"
@@ -110,6 +115,47 @@ function Evaluaciones({ leccionId }) {
                   <DeleteIcon />
                 </IconButton>
               </Box>
+
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => window.open(`http://localhost:3000/estudiante/evaluacion/${eva.id}`, '_blank')}
+              >
+                Probar Evaluación como Estudiante
+              </Button>
+
+              {/* Mostrar campo de recomendación si nota < 7 */}
+              {eva.puntaje_obtenido < 7 && eva.puntaje_obtenido !== null && (
+                <Box sx={{ mt: 2 }}>
+                  <Alert severity="warning" sx={{ mb: 1 }}>
+                    Puntaje menor a 7. Ingrese una recomendación o link de refuerzo.
+                  </Alert>
+                  <TextField
+                    label="Recomendación (link o texto)"
+                    size="small"
+                    fullWidth
+                    value={recomendaciones[eva.id] || ''}
+                    onChange={(e) =>
+                      setRecomendaciones({ ...recomendaciones, [eva.id]: e.target.value })
+                    }
+                  />
+                  <Button
+                    variant="contained"
+                    sx={{ mt: 1 }}
+                    onClick={async () => {
+                      if (!recomendaciones[eva.id]) return;
+                      await axios.post('http://localhost:5000/api/recomendaciones', {
+                        texto: recomendaciones[eva.id],
+                        EvaluacionId: eva.id
+                      });
+                      alert(`Recomendación para ${eva.nombre} guardada en DB`);
+                    }}
+                  >
+                    Guardar Recomendación
+                  </Button>
+
+                </Box>
+              )}
             </ListItem>
           ))}
         </List>

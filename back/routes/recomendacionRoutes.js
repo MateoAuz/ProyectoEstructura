@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+
 const Leccion = require('../models/Leccion');
 const Evaluacion = require('../models/Evaluacion');
 const { tree, recorrerArbol } = require('../decisionTree');
@@ -7,34 +8,31 @@ const { tree, recorrerArbol } = require('../decisionTree');
 router.post('/', async (req, res) => {
   const { tiempo, leccionId } = req.body;
 
-  // 🔎 Buscar la lección actual
   const leccionActual = await Leccion.findByPk(leccionId);
   if (!leccionActual) {
-    return res.status(404).json({ mensaje: "Lección actual no encontrada" });
+    return res.status(404).json({ mensaje: "Lección no encontrada" });
   }
 
-  // 🔥 Buscar la última evaluación registrada de esta lección
-  const evaluacion = await Evaluacion.findOne({
-    where: { LeccionId: leccionId },
-    order: [['createdAt', 'DESC']]
+  const evaluaciones = await Evaluacion.findAll({
+    where: { LeccionId: leccionId }
   });
 
-  if (!evaluacion || evaluacion.puntaje_obtenido === null) {
-    return res.status(404).json({ mensaje: "No hay puntaje registrado en la evaluación de esta lección" });
-  }
+  const ultimaEval = evaluaciones[evaluaciones.length - 1];
+  const reintentos = evaluaciones.length;
 
-  const puntaje = evaluacion.puntaje_obtenido;
-
-  // ✅ Preparar datos de entrada para el árbol
+  // 🔥 NUEVO: propiedades simuladas para prueba
   const data = {
-    puntaje,
-    tiempo
+    noSesionDias: 10, // ejemplo: 10 días sin entrar
+    puntaje: ultimaEval ? ultimaEval.puntaje_obtenido : 0,
+    tiempoRespuestaPromedio: 8, // ejemplo: promedio en segundos
+    lecturasAdicionales: true, // ejemplo: true si leyó extra
+    reintentos: reintentos,
+    vioVideos: false, // ejemplo: no vio videos
   };
 
-  // 🌳 Obtener recomendación usando el árbol de decisión
   const recomendacion = recorrerArbol(tree, data);
 
   res.json({ recomendacion });
 });
 
-module.exports = router;
+module.exports = router; // ✅ EXPORTACIÓN NECESARIA
